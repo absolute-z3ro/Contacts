@@ -3,20 +3,83 @@ package xyz.absolutez3ro.contacts
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.ContactsContract
+import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import xyz.absolutez3ro.contacts.data.Contact
 
 class MainActivity : AppCompatActivity() {
 
     private var contactPermission = false
+    private lateinit var contactAdapter: ContactAdapter
+    private var contactList = emptyList<Contact>()
+    private lateinit var nothingToDisplay: TextView
+    private lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        nothingToDisplay = findViewById(R.id.text_no_result)
+
         if (!isPermissionGranted())
             showPermissionDialog()
+        else {
+            setupRecyclerView()
+        }
+    }
+
+    private fun setupRecyclerView() {
+        nothingToDisplay.visibility = View.GONE
+        contactAdapter = ContactAdapter(this)
+        recyclerView.adapter = contactAdapter
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        val divider = DividerItemDecoration(recyclerView.context, DividerItemDecoration.VERTICAL)
+        recyclerView.addItemDecoration(divider)
+
+        setContacts()
+    }
+
+    private fun setContacts() {
+        val contacts = contactsLoader()
+        contactAdapter.setContactList(contacts)
+    }
+
+    private fun contactsLoader(): List<Contact> {
+        val listOfContacts = mutableListOf<Contact>()
+        val URI = ContactsContract.Contacts.CONTENT_URI
+        val PROJECTION = arrayOf(
+            ContactsContract.Contacts._ID,
+            ContactsContract.Contacts.DISPLAY_NAME
+        )
+
+        val cursor = contentResolver.query(
+            URI,
+            PROJECTION,
+            null,
+            null,
+            ContactsContract.Contacts.DISPLAY_NAME
+        )
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                val id = cursor.getLong(0)
+                val name = cursor.getString(1)
+
+                listOfContacts.add(Contact(id, name))
+            } while (cursor.moveToNext())
+
+            cursor.close()
+        }
+
+        return listOfContacts
     }
 
     private fun isPermissionGranted(): Boolean = ContextCompat.checkSelfPermission(
@@ -67,9 +130,10 @@ class MainActivity : AppCompatActivity() {
     ) {
         when (requestCode) {
             PERMISSION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     contactPermission = true
-                else {
+                    setupRecyclerView()
+                } else {
                     contactPermission = false
                     permissionDeniedDialog()
                 }
