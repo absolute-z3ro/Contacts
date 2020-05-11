@@ -13,14 +13,14 @@ import xyz.absolutez3ro.contacts.data.Contact
 class ContactAdapter(private val context: Context) :
     RecyclerView.Adapter<ContactAdapter.ViewHolder>() {
 
-    private var contacts = emptyList<Contact>()
+    private var contacts: List<Contact>? = emptyList()
 
-    inner class ViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val name = view.findViewById<TextView>(R.id.name)
         private val image = view.findViewById<ImageView>(R.id.contact_image)
 
-        fun bind(contact: Contact, context: Context) {
-            name.text = contact.name
+        fun bind(contact: Contact?, context: Context) {
+            name.text = contact?.name
             Glide.with(context).load(R.drawable.ic_account_circle_24px).into(image)
         }
     }
@@ -31,13 +31,13 @@ class ContactAdapter(private val context: Context) :
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val contact = contacts[position]
+        val contact = contacts?.get(position)
         holder.bind(contact, context)
     }
 
-    override fun getItemCount() = contacts.size
+    override fun getItemCount() = contacts?.size ?: 0
 
-    fun setContactList(newContactList: List<Contact>) {
+    fun setContactList(newContactList: List<Contact>?) {
         contacts = newContactList
         notifyDataSetChanged()
     }

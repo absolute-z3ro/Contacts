@@ -3,21 +3,24 @@ package xyz.absolutez3ro.contacts
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import xyz.absolutez3ro.contacts.data.Contact
+import xyz.absolutez3ro.contacts.data.ContactViewModel
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var contactAdapter: ContactAdapter
+    private lateinit var viewModel: ContactViewModel
     private lateinit var nothingToDisplay: TextView
     private lateinit var recyclerView: RecyclerView
 
@@ -46,42 +49,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setContacts() {
-        val contacts = contactsLoader()
-        if (contacts.isNotEmpty()) {
-            nothingToDisplay.visibility = View.GONE
-            contactAdapter.setContactList(contacts)
-        } else {
-            nothingToDisplay.visibility = View.VISIBLE
-        }
-    }
-
-    private fun contactsLoader(): List<Contact> {
-        val listOfContacts = mutableListOf<Contact>()
-        val URI = ContactsContract.Contacts.CONTENT_URI
-        val PROJECTION = arrayOf(
-            ContactsContract.Contacts._ID,
-            ContactsContract.Contacts.DISPLAY_NAME
-        )
-
-        val cursor = contentResolver.query(
-            URI,
-            PROJECTION,
-            null,
-            null,
-            ContactsContract.Contacts.DISPLAY_NAME
-        )
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                val id = cursor.getLong(0)
-                val name = cursor.getString(1)
-
-                listOfContacts.add(Contact(id, name))
-            } while (cursor.moveToNext())
-
-            cursor.close()
-        }
-
-        return listOfContacts
+        viewModel = ViewModelProvider(this).get(ContactViewModel::class.java)
+        viewModel.contacts.observe(this, Observer { contacts ->
+            contacts.let {
+                if (it.isNotEmpty()) nothingToDisplay.visibility = View.GONE
+                else nothingToDisplay.visibility = View.VISIBLE
+                contactAdapter.setContactList(it)
+            }
+        })
     }
 
     private fun isPermissionGranted(): Boolean = ContextCompat.checkSelfPermission(
