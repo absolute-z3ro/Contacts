@@ -17,9 +17,7 @@ import xyz.absolutez3ro.contacts.data.Contact
 
 class MainActivity : AppCompatActivity() {
 
-    private var contactPermission = false
     private lateinit var contactAdapter: ContactAdapter
-    private var contactList = emptyList<Contact>()
     private lateinit var nothingToDisplay: TextView
     private lateinit var recyclerView: RecyclerView
 
@@ -27,7 +25,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
+        recyclerView = findViewById(R.id.recyclerView)
         nothingToDisplay = findViewById(R.id.text_no_result)
 
         if (!isPermissionGranted())
@@ -130,18 +128,11 @@ class MainActivity : AppCompatActivity() {
     ) {
         when (requestCode) {
             PERMISSION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    contactPermission = true
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                     setupRecyclerView()
-                } else {
-                    contactPermission = false
-                    permissionDeniedDialog()
-                }
+                else permissionDeniedDialog()
             }
-            else -> {
-                contactPermission = false
-                permissionDeniedDialog()
-            }
+            else -> permissionDeniedDialog()
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
