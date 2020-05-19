@@ -36,7 +36,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        nothingToDisplay.visibility = View.GONE
         contactAdapter = ContactAdapter(this)
         recyclerView.adapter = contactAdapter
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -48,7 +47,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun setContacts() {
         val contacts = contactsLoader()
-        contactAdapter.setContactList(contacts)
+        if (contacts.isNotEmpty()) {
+            nothingToDisplay.visibility = View.GONE
+            contactAdapter.setContactList(contacts)
+        } else {
+            nothingToDisplay.visibility = View.VISIBLE
+        }
     }
 
     private fun contactsLoader(): List<Contact> {
